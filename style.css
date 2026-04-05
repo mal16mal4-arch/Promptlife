@@ -1,0 +1,48 @@
+body {
+  background: linear-gradient(to bottom, #1a1a2e, #16213e);
+  color: #ffffff;
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 50px;
+  font-size: 2.5em;
+}
+
+button {
+  background-color: #ff8fab;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+button:hover {
+  background-color: #ff5d8f;
+}
+
+#output {
+  margin-top: 30px;
+  font-size: 1.2em;
+  padding: 10px;
+}
+
+nav {
+  margin-top: 40px;
+}
+
+nav a {
+  color: #ffb3c6;
+  text-decoration: none;
+  margin: 0 10px;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
