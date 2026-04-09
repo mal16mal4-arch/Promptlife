@@ -3,50 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <title>Ship Prompt Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
-  font-family: Arial;
-  background: linear-gradient(to bottom right, #ffe4f1, #ffffff, #f3e8ff);
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom right, #ffe4ec, #ffffff, #f3e8ff);
   text-align: center;
-  padding: 30px;
 }
 
 h1 {
-  color: #ff4da6;
+  margin-top: 30px;
+  font-size: 28px;
+  background: linear-gradient(to right, #ec4899, #8b5cf6);
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
-button {
-  padding: 10px 15px;
-  margin: 5px;
+.tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 15px;
+  justify-content: center;
+}
+
+.tabs button {
+  padding: 8px 14px;
   border-radius: 20px;
-  border: none;
+  border: 1px solid #ddd;
+  background: white;
   cursor: pointer;
 }
 
-.category {
-  background: white;
-}
-
-.active {
-  background: linear-gradient(to right, pink, violet);
+.tabs button.active {
+  background: linear-gradient(to right, #ec4899, #8b5cf6);
   color: white;
+  transform: scale(1.1);
 }
 
-#promptBox {
-  background: white;
-  padding: 20px;
-  margin: 20px auto;
-  max-width: 600px;
-  border-radius: 20px;
-  font-size: 18px;
+.inputs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px;
 }
 
 input {
   padding: 10px;
-  margin: 5px;
   border-radius: 10px;
-  border: 1px solid pink;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.card {
+  background: white;
+  padding: 25px;
+  margin: auto;
+  width: 80%;
+  max-width: 600px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  font-size: 18px;
+  min-height: 100px;
+}
+
+.buttons {
+  margin-top: 15px;
+}
+
+button.main {
+  padding: 12px 20px;
+  background: linear-gradient(to right, #ec4899, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+}
+
+.small-btn {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+}
+
+.liked {
+  margin-top: 30px;
 }
 </style>
 </head>
@@ -55,89 +100,667 @@ input {
 
 <h1>💖 Ship Prompt Generator 💖</h1>
 
-<input id="name1" placeholder="Name 1">
-<input id="name2" placeholder="Name 2">
+<div class="tabs" id="tabs"></div>
 
-<br><br>
+<div class="inputs">
+  <input id="name1" placeholder="Name 1">
+  <input id="name2" placeholder="Name 2">
+</div>
 
-<button onclick="setCategory('all')">All</button>
-<button onclick="setCategory('fluff')">Fluff</button>
-<button onclick="setCategory('angst')">Angst</button>
-<button onclick="setCategory('romance')">Romance</button>
+<div class="card" id="promptBox">Click generate!</div>
 
-<div id="promptBox">Click generate!</div>
+<div class="buttons">
+  <button class="small-btn" onclick="toggleLike()">❤️</button>
+  <button class="main" onclick="generatePrompt()">Generate</button>
+  <button class="small-btn" onclick="copyPrompt()">📋</button>
+</div>
 
-<button onclick="generate()">Generate Prompt</button>
+<div class="liked">
+  <h3>Saved Prompts</h3>
+  <div id="saved"></div>
+</div>
 
 <script>
+const categories = ["all","romance","fluff","angst"];
 
-let currentCategory = "all";
-
-const prompts = {
-fluff: [
-"[insert name] steals [insert name]'s hoodie",
-"[insert name] and [insert name] have a pillow fight",
-"[insert name] pretends to be asleep so [insert name] carries them",
-"[insert name] wraps [insert name] in a blanket burrito",
-"[insert name] kisses [insert name]'s nose after a snowball fight",
-"[insert name] and [insert name] fall asleep on call",
-"[insert name] gives [insert name] a handmade gift",
-"[insert name] plays with [insert name]'s hair",
-"[insert name] and [insert name] share headphones",
-"[insert name] texts 'come outside' and surprises [insert name]"
-],
-
-angst: [
-"[insert name] waits for [insert name] but they never show up",
-"[insert name] says something they can't take back",
-"[insert name] realizes they love [insert name] too late",
-"[insert name] and [insert name] break up and meet years later",
-"[insert name] still keeps [insert name]'s old hoodie",
-"[insert name] hears their song and freezes",
-"[insert name] says 'I'm fine' but isn't",
-"[insert name] lets [insert name] go even though it hurts",
-"[insert name] sees [insert name] with someone else",
-"[insert name] writes a letter they never send"
-],
-
-romance: [
-"[insert name] confesses to [insert name]",
-"[insert name] and [insert name] slow dance",
-"[insert name] kisses [insert name] during a fight",
-"[insert name] and [insert name] watch the sunset",
+let prompts = {
+  romance: [
+"[insert name] confesses something they should've said a long time ago and [insert name] isn't sure how to respond.",
+"[insert name] finds an old love letter from [insert name] that was never sent.",
+"[insert name] fixes [insert name]'s tie before prom",
 "[insert name] gives [insert name] a promise ring",
-"[insert name] and [insert name] go on a late night drive",
-"[insert name] and [insert name] kiss under fireworks",
-"[insert name] plans a surprise date for [insert name]",
-"[insert name] and [insert name] stargaze together",
-"[insert name] fixes [insert name]'s outfit before an event"
+"[insert name] and [insert name] have a beach wedding",
+"[insert name] sees [insert name] in their wedding dress for the first time",
+"[insert name] kisses [insert name] during a fight",
+"[insert name] leaves the dance early. [insert name] chases after them",
+"[insert name] and [insert name] hold pinkies instead of hands",
+"[insert name] sees [insert name] again after years apart. 'You changed. In a good way'",
+"[insert name] and [insert name] hold hands as the city burns",
+"[insert name] and [insert name] run away together",
+"[insert name] and [insert name] meet for the first time at a bar",
+"[insert name] takes pictures of [insert name] with a digital camera in golden hour light",
+"[insert name] and [insert name] slow dance",
+"[insert name] and [insert name] watch the sunset together",
+"[insert name] and [insert name] have a late night call",
+"[insert name] and [insert name] go for a late night drive",
+"[insert name] and [insert name] kiss while fireworks go off in the background",
+"[insert name] and [insert name] slow dance in the living room with no music",
+"[insert name] and [insert name] slow dance on the balcony under the moonlight",
+"[insert name] and [insert name] crash a wedding just to dance together",
+"[insert name] and [insert name] get caught kissing by a giggling friend",
+"[insert name] plans a surprise stargazing date for [insert name]",
+"[insert name] and [insert name] get caught in a photo booth kiss",
+"[insert name] kisses [insert name]'s forehead after every goodbye",
+"[insert name] and [insert name] exchange handmade Valentine's cards",
+"[insert name] and [insert name] dance under string lights",
+"[insert name] and [insert name] stargaze on the roof with hot cocoa",
+"[insert name] and [insert name] watch the sunrise together in pajamas",
+"[insert name] surprises [insert name] with a picnic under the stars",
+"[insert name] and [insert name] share a milkshake at a diner and keep stealing glances",
+"[insert name] writes [insert name]'s name in the sand at the beach",
+"[insert name] and [insert name] argue loudly in the rain",
+"[insert name] and [insert name] have a beach day",
+"[insert name] and [insert name] run through the city at night laughing",
+"[insert name] pulls [insert name] into a kiss just to prove a point",
+"[insert name] kisses [insert name] mid-sentence",
+"[insert name] and [insert name] slow dance in the kitchen at midnight",
+"[insert name] looks at [insert name] like they're the only person in the room",
+"[insert name] cups [insert name]'s face before kissing them softly",
+"[insert name] and [insert name] fall asleep tangled together after talking all night",
+"[insert name] brushes [insert name]'s hair out of their face before kissing them",
+"[insert name] and [insert name] share a quiet moment after everyone leaves",
+"[insert name] pulls [insert name] closer during a hug and doesn't let go",
+"[insert name] kisses [insert name]'s hand absentmindedly",
+"[insert name] and [insert name] sit close enough that their knees touch and neither moves",
+"[insert name] looks at [insert name] and realizes they're in love",
+"[insert name] and [insert name] share their first kiss somewhere unexpected",
+"[insert name] and [insert name] fall in love slowly without realizing it",
+"[insert name] whispers 'stay' and [insert name] does",
+"[insert name] and [insert name] laugh into a kiss",
+"[insert name] kisses [insert name] like they've been waiting forever",
+"[insert name] and [insert name] share a long hug that turns into something more",
+"[insert name] leans in first and [insert name] freezes for a second before kissing back",
+"[insert name] pulls [insert name] into their lap without thinking",
+"[insert name] rests their forehead against [insert name]'s",
+"[insert name] and [insert name] walk side by side, hands brushing until they finally hold",
+"[insert name] kisses [insert name] just to shut them up",
+"[insert name] and [insert name] get caught staring at each other",
+"[insert name] and [insert name] kiss in the rain like it's a movie scene",
+"[insert name] whispers something soft that makes [insert name] blush instantly",
+"[insert name] and [insert name] sit in silence, completely comfortable",
+"[insert name] traces [insert name]'s lips with their thumb before kissing them",
+"[insert name] pulls [insert name] into a hug from behind",
+"[insert name] kisses [insert name] on impulse and immediately panics",
+"[insert name] and [insert name] share a kiss that feels like coming home",
+"[insert name] looks at [insert name] and forgets what they were saying",
+"[insert name] and [insert name] fall asleep holding hands",
+"[insert name] gently tilts [insert name]'s chin up before kissing them",
+"[insert name] kisses [insert name] softly before pulling away too soon",
+"[insert name] and [insert name] share a look that says everything they can't",
+"[insert name] pulls [insert name] closer in a crowded room",
+"[insert name] kisses [insert name] like it's their last chance",
+"[insert name] and [insert name] finally admit their feelings after denying it for so long"
+],
+  fluff: [
+"[insert name] and [insert name] have a pillow fight",
+"[insert name] steals [insert name]'s hoodie",
+"[insert name] pretends to be asleep so [insert name] will carry them to bed",
+"[insert name] pulls the blanket over [insert name] without waking them",
+"[insert name] and [insert name] fall asleep on call",
+"[insert name] and [insert name] make a midnight snack together",
+"[insert name] memorizes [insert name]'s coffee order",
+"[insert name] and [insert name] have a cozy night in on a rainy afternoon",
+"[insert name] and [insert name] hold hands at the movies",
+"[insert name] bakes [insert name] a birthday cake",
+"[insert name] and [insert name] spend christmas together",
+"[insert name] and [insert name] prank trick or treaters together",
+"[insert name] is scared of thunder, [insert name] holds them through it",
+"[insert name] and [insert name] go to the fair",
+"[insert name] catches [insert name] staring at them in class",
+"[insert name] helps [insert name] clean their closet",
+"[insert name] falls asleep on [insert name]'s lap at a sleepover",
+"[insert name] and [insert name] slow dance to a song only they can hear",
+"[insert name] gives [insert name] a handmade bracelet",
+"[insert name] lends [insert name] their scarf during a chilly day",
+"[insert name] paints [insert name]'s nails while they talk about nothing",
+"[insert name] and [insert name] share headphones on the bus",
+"[insert name] plays with [insert name]'s hair absentmindedly",
+"[insert name] gives [insert name] a nickname that only they're allowed to use",
+"[insert name] ties [insert name]'s shoelaces when they're rushing",
+"[insert name] puts a flower crown on [insert name]'s head",
+"[insert name] shares their last cookie with [insert name]",
+"[insert name] kisses [insert name] on the forehead before class",
+"[insert name] carries [insert name] on their back through the hallway",
+"[insert name] builds a pillow fort and invites [insert name] to hang out inside",
+"[insert name] and [insert name] decorate cookies together and make a mess",
+"[insert name] braids [insert name]'s hair before a big event",
+"[insert name] doodles hearts next to [insert name]'s name in class",
+"[insert name] gently wipes frosting off [insert name]'s nose",
+"[insert name] surprises [insert name] with a scrapbook full of memories",
+"[insert name] wakes [insert name] up with a soft good morning text",
+"[insert name] traces shapes on [insert name]'s arm as they talk",
+"[insert name] sneaks a photo of [insert name] while they're smiling",
+"[insert name] writes a note and hides it in [insert name]'s lunchbox",
+"[insert name] listens to [insert name] talk about something they love",
+"[insert name] lets [insert name] draw little doodles on their hand",
+"[insert name] picks up [insert name] from school with hot chocolate",
+"[insert name] and [insert name] fall asleep on the couch halfway through movie night",
+"[insert name] kisses [insert name] on the nose after a snowball fight",
+"[insert name] bakes cookies just to see [insert name] smile",
+"[insert name] pretends to hate cuddling but melts when [insert name] hugs them",
+"[insert name] lets [insert name] wear their hoodie and it's way too big",
+"[insert name] blushes every time [insert name] says their name",
+"[insert name] and [insert name] play video games and keep cheating to make each other laugh",
+"[insert name] gives [insert name] a piggyback ride after they trip",
+"[insert name] keeps pretending to need help just to hold [insert name]'s hand",
+"[insert name] hides in [insert name]'s scarf because it smells like them",
+"[insert name] gets distracted watching [insert name] laugh",
+"[insert name] and [insert name] sing together in the car",
+"[insert name] wraps [insert name] in a blanket like a burrito",
+"[insert name] and [insert name] get lost in a corn maze",
+"[insert name] texts [insert name] 'come outside' and shows up with ice cream",
+"[insert name] starts a tickle fight and regrets it immediately",
+"[insert name] and [insert name] wear matching sweaters and don't even notice",
+"[insert name] and [insert name] take naps together under a shared blanket",
+"[insert name] and [insert name] try to stay mad at each other, and fail",
+"[insert name] wears glitter because [insert name] likes it",
+"[insert name] and [insert name] reenact romantic movie scenes, badly",
+"[insert name] and [insert name] write 'I love you' in steam on the mirror",
+"[insert name] and [insert name] try to teach their pet a trick together",
+"[insert name] plays with [insert name]'s hair during long car rides",
+"[insert name] makes [insert name] pancakes shaped like hearts",
+"[insert name] and [insert name] wear matching onesies on a rainy day",
+"[insert name] sings [insert name] to sleep",
+"[insert name] draws on [insert name]'s hand",
+"[insert name] gives [insert name] a homemade gift",
+"[insert name] carries [insert name] across puddles",
+"[insert name] sneaks kisses every time [insert name] looks away",
+"[insert name] and [insert name] build a blanket fort and never want to leave",
+"[insert name] and [insert name] read together in a tree",
+"[insert name] buys [insert name] art supplies",
+"[insert name] picks [insert name] flowers",
+"[insert name] and [insert name] cut each other's hair",
+"[insert name] and [insert name] make a playlist that reminds them of each other",
+"[insert name] teaches [insert name] how to ice skate and they keep falling together",
+"[insert name] reads a book out loud while [insert name] lays in their lap",
+"[insert name] and [insert name] build a pillow fort and hide from their responsibilities",
+"[insert name] and [insert name] get caught in the rain and laugh the whole way home",
+"[insert name] and [insert name] keep kissing during red lights on a long drive",
+"[insert name] and [insert name] have matching phone wallpapers without telling each other",
+"[insert name] keeps a list of things [insert name] says that make them smile",
+"[insert name] and [insert name] take cheesy photos in a photobooth",
+"[insert name] and [insert name] send voice notes of 'I miss you' during the day",
+"[insert name] sneaks into [insert name]'s bed during a thunderstorm",
+"[insert name] and [insert name] celebrate silly anniversaries just for an excuse to spoil each other",
+"[insert name] and [insert name] whisper silly things to make each other giggle",
+"[insert name] and [insert name] feed each other breakfast in bed",
+"[insert name] and [insert name] adopt a stray animal",
+"[insert name] can't stop talking about [insert name] to everyone they know",
+"[insert name] plans a scavenger hunt to all of [insert name]'s favorite places",
+"[insert name] writes little notes for [insert name] and hides them everywhere"
+],
+  angst: [
+"[insert name] is supposed to be focusing on the game, but keeps watching [insert name] laugh with someone else.",
+"[insert name] used to wait by [insert name]'s locker, now they walk past it",
+"[insert name] says 'we were just kids.' [insert name] still remembers every second",
+"[insert name] says something they can't take back, and [insert name] doesn't respond.",
+"[insert name] realizes their love for [insert name] far too late",
+"[insert name] accidentally hurts [insert name]",
+"[insert name] and [insert name] break up. Years later, they meet at a friend's wedding",
+"[insert name] waits for [insert name] at a restaurant. They don't show up",
+"[insert name] waits at a bus stop with a gift for [insert name] they never got to give",
+"[insert name] watches everyone else leave the party. [insert name] said they'd come",
+"[insert name] and [insert name] still talk, but not about the things that matter",
+"[insert name] says 'I'm fine' while [insert name] searches their face for the truth",
+"[insert name] listens to the voicemail from [insert name] on repeat, but never replies",
+"[insert name] and [insert name] both remember the fight differently",
+"[insert name] leaves before the coffee brews, and [insert name] doesn't ask why anymore",
+"[insert name] and [insert name] stop arguing. They also stop talking",
+"[insert name] lets [insert name] go because they think it's what's best",
+"[insert name] sits beside [insert name] on the couch, but the space between them feels wider",
+"[insert name] looks at the anniversary date on the calendar and pretends not to notice",
+"[insert name] holds [insert name]'s hand out of habit, not love",
+"[insert name] still wears their ring. [insert name] doesn't anymore",
+"[insert name] rewrites the text again and again before finally pressing send",
+"[insert name] cries in the car while [insert name] sleeps beside them, unaware",
+"[insert name] saves the last piece of cake, but [insert name] never comes home to eat it",
+"[insert name] folds [insert name]'s laundry like they used to, even though they don't live there anymore",
+"[insert name] and [insert name] spend the night talking about everything except what really hurts",
+"[insert name] plays their favorite song, hoping [insert name] will remember",
+"[insert name] helps [insert name] pack, pretending it's not the last time",
+"[insert name] laughs at [insert name]'s joke and realizes they've missed this",
+"[insert name] and [insert name] go out to dinner and talk like strangers",
+"[insert name] kisses [insert name] like they're afraid it's the last time",
+"[insert name] says 'I love you' out loud. [insert name] doesn't hear it",
+"[insert name] returns home and finds everything just as they left it, except [insert name]",
+"[insert name] notices the space where [insert name]'s toothbrush used to be",
+"[insert name] says 'goodbye' like they don't want to mean it",
+"[insert name] runs into [insert name] in the rain. They both say 'hi' like it hurts",
+"[insert name] holds [insert name] tightly and knows they're slipping away",
+"[insert name] says 'I missed you' and [insert name] doesn't say it back",
+"[insert name] writes a song about [insert name] and never plays it for them",
+"[insert name] wakes up from a dream where [insert name] still loved them",
+"[insert name] and [insert name] say goodbye with a hug that lasts too long",
+"[insert name] and [insert name] talk about the future without mentioning each other in it",
+"[insert name] hears a song on the radio and drives in silence",
+"[insert name] makes dinner for two and throws half of it away",
+"[insert name] finds an unsent letter addressed to [insert name] in the back of a drawer",
+"[insert name] can't sleep in their old bed without [insert name]",
+"[insert name] hears someone say [insert name]'s name in a crowd and turns",
+"[insert name] stands in front of [insert name]'s door, debating whether to knock",
+"[insert name] dreams about [insert name] and wakes up with tears on their pillow",
+"[insert name] keeps rereading old texts from [insert name], trying to find a reason it ended",
+"[insert name] tries dating again and finds themselves comparing everyone to [insert name]",
+"[insert name] waits in the rain just in case [insert name] shows up",
+"[insert name] misses the arguments more than the silence",
+"[insert name] finds one of [insert name]'s shirts in the laundry and breaks down",
+"[insert name] answers an unknown number, hoping it's [insert name]",
+"[insert name] sits at the edge of the bed where [insert name] used to sleep",
+"[insert name] finally takes off the ring and whispers 'thank you'",
+"[insert name] hears the door creak and thinks, for a second, it's [insert name]",
+"[insert name] lets go of the last thing that reminded them of [insert name]",
+"[insert name] sets the table for one",
+"[insert name] tries to forget but the city won't let them",
+"[insert name] feels [insert name] in every room they walk into",
+"[insert name] skips practice, and [insert name] finds them alone in the locker room, crying.",
+"[insert name] has to leave [insert name] behind",
+"[insert name] and [insert name] get into a huge fight",
+"[insert name] finds out [insert name] is using them for money",
+"[insert name] and [insert name] lose each other during a zombie apocalypse",
+"[insert name] still sets the table for two",
+"[insert name] looks across the table and wonders when the silence became easier than the truth",
+"[insert name] folds [insert name]'s clothes like it still matters",
+"[insert name] sees [insert name] laughing and wonders if they were ever the reason"
+],
+  Slowburn: [
+"[insert name] asks [insert name] if they need study help after seeing their last exam result",
+"[insert name] offers [insert name] a ride home after their shift together",
+"[insert name] wears something in [insert name]'s favourite colour just to see if they notice",
+"[insert name] starts a fight with someone flirting with [insert name]",
+"[insert name] secretly watches [insert name]'s livestreams and never says anything",
+"[insert name] brags about [insert name] to their friends without realizing it",
+"[insert name] tries to impress [insert name] and completely fails",
+"[insert name] trains harder just to impress [insert name] but they don't notice",
+"[insert name] sketches [insert name] in their notebook and someone finds out",
+"[insert name] gets caught doodling [insert name]'s name",
+"[insert name] keeps walking [insert name] home even when they insist they don't need it",
+"[insert name] lets [insert name] win just to see them smile",
+"[insert name] catches [insert name] dancing alone and doesn't interrupt",
+"[insert name] always warms [insert name]'s hands in winter",
+"[insert name] stays up late waiting for [insert name] to get home safe",
+"[insert name] rereads old texts and wonders if [insert name] does too",
+"[insert name] offers to walk [insert name] home in the rain",
+"[insert name] invites [insert name] to a party and regrets it immediately",
+"[insert name] takes [insert name] to a new café and watches their reaction the whole time",
+"[insert name] is nervous to meet [insert name]'s parents",
+"[insert name] brings [insert name] to a work event and stays close the whole time",
+"[insert name] accidentally likes [insert name]'s old post from years ago",
+"[insert name] creates fake accounts just to boost [insert name]'s confidence online",
+"[insert name] finds a letter in their locker with familiar handwriting",
+"[insert name] leaves a snack on [insert name]'s desk every day without saying it's them",
+"[insert name] and [insert name] get assigned seats next to each other",
+"[insert name] watches [insert name] succeed using the help they gave them",
+"[insert name] holds [insert name]'s hand for the first time in a crowded place",
+"[insert name] lets [insert name] rest their head in their lap without comment",
+"[insert name] shows up to [insert name]'s performance and they lock eyes",
+"[insert name] shows up at [insert name]'s house late at night saying 'I couldn't sleep'",
+"[insert name] brings [insert name] their favorite snack after a bad day",
+"[insert name] and [insert name] get caught passing notes",
+"[insert name] stands up for [insert name] without hesitation",
+"[insert name] brings [insert name] a warm drink without asking",
+"[insert name] rests their head on [insert name]'s shoulder during a movie",
+"[insert name] gives [insert name] a flower they picked on the way",
+"[insert name] leaves kind notes in [insert name]'s locker every morning",
+"[insert name] doodles hearts next to [insert name]'s name",
+"[insert name] brings [insert name] a handmade gift for no reason",
+"[insert name] puts a flower crown on [insert name]'s head",
+"[insert name] shows up with a handmade sign at [insert name]'s event",
+"[insert name] picks flowers for [insert name]",
+"[insert name] convinces [insert name] to explore somewhere slightly dangerous together",
+"[insert name] bumps into [insert name] in a crowded hallway and catches them",
+"[insert name] tells everyone they're not dating but acts like they are",
+"[insert name] catches [insert name] staring and just smiles",
+"[insert name] finds out [insert name] has been drawing them",
+"[insert name] learns [insert name]'s routine without realizing it",
+"[insert name] starts showing up everywhere [insert name] is",
+"[insert name] remembers small details about [insert name] that even they forgot",
+"[insert name] notices when [insert name] is having a bad day before anyone else",
+"[insert name] adjusts their schedule just to see [insert name] more",
+"[insert name] keeps their distance but always watches [insert name]",
+"[insert name] looks for [insert name] in every crowded room",
+"[insert name] feels calmer just being near [insert name]",
+"[insert name] makes excuses to text [insert name]",
+"[insert name] saves every message from [insert name]",
+"[insert name] replays conversations with [insert name] over and over",
+"[insert name] notices when [insert name] stops smiling as much",
+"[insert name] starts caring more than they meant to",
+"[insert name] realizes they've memorized [insert name]'s laugh",
+"[insert name] gets jealous but doesn't understand why",
+"[insert name] denies their feelings even when it's obvious",
+"[insert name] almost confesses, then laughs it off",
+"[insert name] says 'we're just friends' and immediately regrets it",
+"[insert name] looks at [insert name] and knows they're in trouble"
+],
+  Established: [
+"[insert name] makes [insert name]'s coffee just the way they like it every morning",
+"[insert name] and [insert name] slow dance in the kitchen while dinner simmers",
+"[insert name] leaves the porch light on for [insert name] every night",
+"[insert name] finds a love note tucked into their coat from [insert name]",
+"[insert name] falls asleep on the couch, and [insert name] gently covers them with a blanket",
+"[insert name] surprises [insert name] with breakfast in bed on their day off",
+"[insert name] rubs [insert name]'s shoulders while they cook dinner together",
+"[insert name] and [insert name] spend a rainy day doing a puzzle and sipping tea",
+"[insert name] picks [insert name] up from work with flowers just because",
+"[insert name] runs a warm bath for [insert name] after a hard day",
+"[insert name] kisses [insert name]'s forehead and whispers goodnight",
+"[insert name] and [insert name] laugh about how they met while folding laundry",
+"[insert name] waits up for [insert name] even though they said not to",
+"[insert name] and [insert name] fall asleep holding hands after a long day",
+"[insert name] and [insert name] hold hands in the car, even in silence",
+"[insert name] bakes [insert name]'s favorite cake on their anniversary",
+"[insert name] brings home a souvenir from a trip just for [insert name]",
+"[insert name] gives [insert name] a forehead kiss before leaving for the day",
+"[insert name] and [insert name] share an umbrella walking home from dinner",
+"[insert name] leaves a jacket over [insert name] when they fall asleep at their desk",
+"[insert name] and [insert name] decorate for the holidays with way too many lights",
+"[insert name] pulls [insert name] in for a kiss mid argument just to stop the spiral",
+"[insert name] brings [insert name] a cup of tea when they're stressed without saying a word",
+"[insert name] holds [insert name]'s hand while waiting at the doctor's office",
+"[insert name] wakes up to [insert name] asleep on their chest, snoring softly",
+"[insert name] and [insert name] leave each other notes on the bathroom mirror",
+"[insert name] hums while brushing [insert name]'s hair",
+"[insert name] and [insert name] dance in the living room to an old song from their wedding",
+"[insert name] carries [insert name] to bed when they fall asleep on the couch",
+"[insert name] kisses [insert name] goodnight like it's still their first time",
+"[insert name] puts a coat over [insert name] when it gets cold outside",
+"[insert name] and [insert name] make breakfast together every Sunday without fail",
+"[insert name] packs [insert name] a lunch with a little heart drawn inside",
+"[insert name] and [insert name] cook dinner together and make a mess",
+"[insert name] sings off-key and [insert name] claps anyway",
+"[insert name] wraps [insert name] in a hug after a long day and everything feels better",
+"[insert name] and [insert name] hold hands during the quiet parts of a movie",
+"[insert name] and [insert name] repaint their bedroom a new color just to make a change",
+"[insert name] and [insert name] keep a photo strip from a photo booth in their wallet",
+"[insert name] stargazes with [insert name] and talks about growing old in the same house",
+"[insert name] sneaks a love note into [insert name]'s suitcase before a trip",
+"[insert name] and [insert name] stay up all night talking even though they have nothing new to say",
+"[insert name] and [insert name] decorate their first shared home together",
+"[insert name] and [insert name] adopt a dog and argue over what to name it",
+"[insert name] and [insert name] exchange glances across a crowded room",
+"[insert name] and [insert name] fix up a little cabin together laughing through every mistake",
+"[insert name] always saves the last cookie for [insert name]",
+"[insert name] and [insert name] keep a jar of notes labeled 'reasons I love you'",
+"[insert name] kisses [insert name] in the rain just because they can",
+"[insert name] smiles every time [insert name] leaves their shoes by the door",
+"[insert name] puts their arm around [insert name] during a movie, still a little nervous somehow",
+"[insert name] knows exactly how [insert name] takes their coffee without asking",
+"[insert name] reaches for [insert name]'s hand without looking",
+"[insert name] and [insert name] argue over something small and laugh halfway through",
+"[insert name] checks if [insert name] got home safe every single night",
+"[insert name] kisses [insert name] absentmindedly while doing something else",
+"[insert name] and [insert name] fall asleep mid-conversation",
+"[insert name] steals food off [insert name]'s plate and they pretend to be annoyed",
+"[insert name] leans into [insert name] without thinking",
+"[insert name] and [insert name] share a look that says everything without words",
+"[insert name] instinctively reaches for [insert name] in a crowd",
+"[insert name] fixes [insert name]'s clothes or hair without saying anything",
+"[insert name] always notices when [insert name] is even slightly off",
+"[insert name] and [insert name] sit together in comfortable silence doing separate things",
+"[insert name] rests their head on [insert name] without asking",
+"[insert name] knows exactly how to calm [insert name] down",
+"[insert name] and [insert name] joke about their future like it's already decided",
+"[insert name] can't sleep properly without [insert name] beside them",
+"[insert name] wakes up and reaches for [insert name] first thing",
+"[insert name] and [insert name] share routines that feel like second nature",
+"[insert name] feels at home wherever [insert name] is",
+"[insert name] looks at [insert name] and realizes this is it for them"
+],
+  Reunion: [
+"[insert name] and [insert name] meet in a jail cell after years of not talking",
+"[insert name] and [insert name] break up. Years later, they meet at a friend's wedding",
+"[insert name] and [insert name] meet again at a wedding, not theirs",
+"[insert name] comes back to visit. [insert name] doesn't know what to say",
+"[insert name] says 'you look good' and [insert name] tries not to cry",
+"[insert name] holds [insert name]'s hand during the flight, just like old times",
+"[insert name] gives [insert name] their old hoodie back, folded neatly, like a memory",
+"[insert name] asks how [insert name] has been. They both lie",
+"[insert name] walks past [insert name] in the street, and their heart stutters",
+"[insert name] and [insert name] run into each other, and the silence says everything",
+"[insert name] laughs at [insert name]'s favorite show, but it feels wrong without them",
+"[insert name] and [insert name] meet for coffee and pretend they were never more than friends",
+"[insert name] visits the place they first kissed, just to remember",
+"[insert name] and [insert name] try to have fun again. It almost works",
+"[insert name] gets a message from [insert name] after months of silence, just a heart emoji",
+"[insert name] and [insert name] share a cab ride in silence",
+"[insert name] makes [insert name] laugh one last time before leaving",
+"[insert name] hugs [insert name] like it's the first time and the last",
+"[insert name] and [insert name] sit on the porch, neither saying the thing they need to",
+"[insert name] rereads the dedication in a book [insert name] once gave them",
+"[insert name] bumps into [insert name] at the train station and both pretend not to notice",
+"[insert name] and [insert name] watch fireworks and say nothing about last year",
+"[insert name] and [insert name] go for a walk to talk, but never get past small talk",
+"[insert name] and [insert name] run into each other at the bookstore and pretend to be strangers",
+"[insert name] and [insert name] see each other at a mutual friend's party and avoid eye contact",
+"[insert name] visits [insert name]'s family and doesn't know what to say",
+"[insert name] and [insert name] have dinner for the first time in months, no one touches their food",
+"[insert name] brings up an old memory and realizes [insert name] has forgotten",
+"[insert name] and [insert name] sit on a train in silence, hands almost touching",
+"[insert name] says something only [insert name] used to understand, no one reacts",
+"[insert name] and [insert name] laugh like old times, then remember they aren't anymore",
+"[insert name] and [insert name] meet eyes at graduation both thinking 'what if'",
+"[insert name] almost says 'I missed you' but changes it at the last second",
+"[insert name] notices the way [insert name] hasn't changed at all",
+"[insert name] notices the way [insert name] has changed too much",
+"[insert name] keeps looking at [insert name] like they might disappear again",
+"[insert name] doesn't know whether to hug [insert name] or stay still",
+"[insert name] says something casual while their hands shake",
+"[insert name] and [insert name] sit too far apart on purpose",
+"[insert name] and [insert name] keep accidentally brushing hands but never holding them",
+"[insert name] hears [insert name]'s laugh again and freezes",
+"[insert name] forgets what they were saying when they see [insert name]",
+"[insert name] feels like no time has passed and too much time has passed at once",
+"[insert name] wants to ask everything but says nothing",
+"[insert name] wonders if [insert name] ever thinks about them too",
+"[insert name] walks away first even though they don't want to",
+"[insert name] turns back hoping [insert name] will too",
+"[insert name] and [insert name] stand there a second too long before saying goodbye",
+"[insert name] replays the interaction over and over after they leave",
+"[insert name] smiles after seeing [insert name] again, then feels worse",
+"[insert name] realizes they're not over [insert name] at all"
+],
+ School: [
+"[insert name] finds [insert name] sleeping in the library",
+"during a field trip, [insert name] gives [insert name] their jacket",
+"[insert name] is nervous to go to a halloween party, [insert name] reassures them",
+"[insert name] catches [insert name] staring at them in class",
+"[insert name] and [insert name] get caught passing notes",
+"[insert name] and [insert name] get assigned to sit next to each other in class",
+"[insert name] helps [insert name] with their long procrastinated project",
+"[insert name] offers to pay for [insert name]'s lunch",
+"[insert name] and [insert name] sit next to each other in class but haven't spoken for years",
+"[insert name] sees [insert name] laughing with someone else and looks away too quickly",
+"[insert name] deletes a message to [insert name] before hitting send for the fifth time",
+"[insert name] stays home from the party because they knew [insert name] would be there",
+"[insert name] walks past [insert name] in the hallway and pretends they don't notice",
+"[insert name] watches [insert name] dance with someone else at prom",
+"[insert name] finds an old picture of them and [insert name] taped in an old locker",
+"[insert name] almost says something to [insert name] after class but doesn't",
+"[insert name] changes their route to avoid [insert name] every day",
+"[insert name] cries in the bathroom after overhearing [insert name] talking about them",
+"[insert name] writes a poem about [insert name] and never shows anyone",
+"[insert name] finds [insert name] asleep in the library and covers them with their hoodie",
+"[insert name] throws out [insert name]'s bracelet but digs it out of the trash later",
+"[insert name] and [insert name] get paired up for a project and pretend everything's fine",
+"[insert name] and [insert name] share a headphone on the bus ride home in complete silence",
+"[insert name] and [insert name] run into each other during detention",
+"[insert name] texts 'I miss you' then deletes it before [insert name] sees it",
+"[insert name] keeps [insert name]'s old hoodie but never wears it",
+"[insert name] and [insert name] share a look across the room that says everything",
+"[insert name] finds a drawing of themself in [insert name]'s sketchbook",
+"[insert name] and [insert name] argue in the rain until neither can speak",
+"[insert name] shows up at [insert name]'s house but leaves before knocking",
+"[insert name] sits alone at lunch where they used to sit with [insert name]",
+"[insert name] stands up for [insert name] from bullies",
+"[insert name] finds their yearbook signed by [insert name] and reads it ten times",
+"[insert name] hears [insert name] got a new partner and doesn't know how to react",
+"[insert name] returns a hoodie they borrowed from [insert name] folded and clean",
+"[insert name] and [insert name] avoid each other during a field trip but both keep looking",
+"[insert name] plays the piano after school not knowing [insert name] is listening",
+"[insert name] writes lyrics about [insert name] in their journal",
+"[insert name] skips class just to get away from [insert name] for a while",
+"[insert name] and [insert name] get locked in the gym overnight",
+"[insert name] and [insert name] talk again for the first time during a group project",
+"[insert name] and [insert name] text all night but ignore each other the next day",
+"[insert name] walks home in the rain after seeing [insert name] with someone else",
+"[insert name] keeps checking their phone hoping [insert name] will message first",
+"[insert name] rips up a love note they were going to give [insert name]",
+"[insert name] and [insert name] share an umbrella without speaking",
+"[insert name] doodles [insert name]'s name in the margin of their notes",
+"[insert name] writes [insert name]'s name on a fogged-up bus window and wipes it away",
+"[insert name] sees [insert name] cry in the hallway and just sits beside them",
+"[insert name] walks away before [insert name] can finish apologizing",
+"[insert name] picks up [insert name]'s notebook and finds something written about them",
+"[insert name] and [insert name] talk on the roof after school and say too much",
+"[insert name] returns a mixtape [insert name] made them without a word",
+"[insert name] and [insert name] see each other at a party and act like strangers",
+"[insert name] passes a note to [insert name] and instantly regrets it",
+"[insert name] helps [insert name] with homework and pretends nothing happened between them",
+"[insert name] and [insert name] share earbuds on the way home heartbeats loud",
+"[insert name] stands outside the theater waiting to see if [insert name] shows up",
+"[insert name] sees [insert name] wearing something they gave them",
+"[insert name] and [insert name] meet eyes at graduation both thinking what if",
+"[insert name] reads an old text thread with [insert name] until their battery dies",
+"[insert name] sneaks glances at [insert name] from across the cafeteria",
+"[insert name] hesitates before liking [insert name]'s new post",
+"[insert name] and [insert name] sit near each other at the assembly but never speak",
+"[insert name] tells their friend they're over [insert name] but keeps bringing them up",
+"[insert name] pretends to be fine when [insert name] sits next to someone else",
+"[insert name] avoids the hallway where [insert name] always used to wait for them",
+"[insert name] stays late at rehearsal just to be near [insert name]",
+"[insert name] and [insert name] work together in silence tension thick",
+"[insert name] catches [insert name] looking and quickly looks away",
+"[insert name] rips out the journal page that mentions [insert name]",
+"[insert name] listens to their song on repeat all night",
+"[insert name] avoids eye contact when [insert name] walks past with someone else",
+"[insert name] turns their chair away from [insert name] in class but still listens",
+"[insert name] and [insert name] reach for the same book in the library",
+"[insert name] scrolls past [insert name]'s stories pretending they don't care",
+"[insert name] almost walks up to [insert name] after the game but doesn't",
+"[insert name] stops wearing the hoodie [insert name] gave them but keeps it in their closet",
+"[insert name] closes the yearbook when they see [insert name]'s picture",
+"[insert name] draws [insert name]'s initials in the sand before the water washes it away",
+"[insert name] sees [insert name] laughing and wishes they could join in again",
+"[insert name] walks to [insert name]'s street but doesn't knock"
+],
+  Fantasy: [
+"[insert name] casts a love spell, but [insert name] was already in love",
+"[insert name] and [insert name] fall in love while stuck in an enchanted loop",
+"[insert name] and [insert name] get caught in a time-freezing spell and spend years alone together",
+"[insert name] and [insert name] become immortal and watch the world change around them",
+"[insert name] is a detective trying to solve [insert name]'s murder",
+"[insert name] and [insert name] agree: if they get separated, meet at the river",
+"[insert name] and [insert name] hold hands as the city burns around them",
+"[insert name] and [insert name] run away together to escape their fate",
+"[insert name] and [insert name] lose each other during a zombie apocalypse",
+"[insert name] has to leave [insert name] behind to save them",
+"[insert name] writes a book about [insert name], not knowing they’re still alive",
+"[insert name] convinces [insert name] to explore a haunted place with them",
+"[insert name] teaches [insert name] how to use magic",
+"[insert name] and [insert name] grow old together despite a curse trying to keep them apart",
+"[insert name] and [insert name] see each other in every lifetime but never remember why they feel connected",
+"[insert name] remembers every past life, [insert name] remembers none",
+"[insert name] is a villain but refuses to hurt [insert name]",
+"[insert name] is the hero sent to defeat [insert name], but hesitates",
+"[insert name] and [insert name] are on opposite sides of a war but keep meeting in secret",
+"[insert name] sneaks into [insert name]'s kingdom just to see them again",
+"[insert name] leaves coded messages across time for [insert name] to find",
+"[insert name] and [insert name] share dreams every night without understanding why",
+"[insert name] wakes up in a world where [insert name] doesn’t exist",
+"[insert name] brings [insert name] back from the dead but something is different",
+"[insert name] trades something important just to save [insert name]",
+"[insert name] and [insert name] are cursed to forget each other every day",
+"[insert name] writes [insert name]'s name in a spellbook they’re not supposed to touch",
+"[insert name] and [insert name] meet at the same place in every universe",
+"[insert name] can only see [insert name] when it rains",
+"[insert name] hears [insert name]'s voice through magic but can’t find them",
+"[insert name] crosses dimensions just to find [insert name]",
+"[insert name] finds [insert name] frozen in time and refuses to leave them",
+"[insert name] promises to find [insert name] in every lifetime",
+"[insert name] and [insert name] break a curse together",
+"[insert name] hides [insert name] from something hunting them",
+"[insert name] sacrifices themselves so [insert name] can live",
+"[insert name] and [insert name] meet as strangers but feel like they’ve known each other forever",
+"[insert name] remembers [insert name] at the last second before the spell resets",
+"[insert name] and [insert name] find each other again against all odds",
+"[insert name] chooses [insert name] over power, destiny, or immortality"
 ]
 };
 
-function getAllPrompts() {
-  return [...prompts.fluff, ...prompts.angst, ...prompts.romance];
+let currentCategory = "all";
+let currentPrompt = "";
+let liked = [];
+
+const tabsDiv = document.getElementById("tabs");
+
+categories.forEach(cat => {
+  const btn = document.createElement("button");
+  btn.innerText = cat;
+  btn.onclick = () => {
+    currentCategory = cat;
+    document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    generatePrompt();
+  };
+  tabsDiv.appendChild(btn);
+});
+
+tabsDiv.children[0].classList.add("active");
+
+function getAllPrompts(){
+  return Object.values(prompts).flat();
 }
 
-function setCategory(cat) {
-  currentCategory = cat;
-}
+function generatePrompt(){
+  let list = currentCategory==="all" ? getAllPrompts() : prompts[currentCategory];
+  currentPrompt = list[Math.floor(Math.random()*list.length)];
 
-function generate() {
-  let list = currentCategory === "all" ? getAllPrompts() : prompts[currentCategory];
-
-  let prompt = list[Math.floor(Math.random() * list.length)];
-
+  let i = 0;
   let n1 = document.getElementById("name1").value || "Name 1";
   let n2 = document.getElementById("name2").value || "Name 2";
 
-  let i = 0;
-  prompt = prompt.replace(/\[insert name\]/g, () => {
+  const text = currentPrompt.replace(/\[insert name\]/g, ()=>{
     return i++ % 2 === 0 ? n1 : n2;
   });
 
-  document.getElementById("promptBox").innerText = prompt;
+  document.getElementById("promptBox").innerText = text;
 }
 
+function toggleLike(){
+  if(liked.includes(currentPrompt)){
+    liked = liked.filter(p=>p!==currentPrompt);
+  } else {
+    liked.push(currentPrompt);
+  }
+  renderSaved();
+}
+
+function renderSaved(){
+  const div = document.getElementById("saved");
+  div.innerHTML="";
+  liked.forEach(p=>{
+    const el = document.createElement("div");
+    el.innerText = p;
+    el.onclick = ()=> {
+      currentPrompt = p;
+      generatePrompt();
+    };
+    div.appendChild(el);
+  });
+}
+
+function copyPrompt(){
+  navigator.clipboard.writeText(document.getElementById("promptBox").innerText);
+}
 </script>
 
 </body>
